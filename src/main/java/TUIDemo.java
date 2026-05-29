@@ -11,6 +11,7 @@ import jexer.TText;
 import jexer.TWindow;
 import jexer.event.TMenuEvent;
 import jexer.menu.TMenu;
+import java.io.IOException;
 
 public class TUIDemo extends TApplication {
 
@@ -25,7 +26,12 @@ public class TUIDemo extends TApplication {
     public TUIDemo() throws Exception {
         super(BackendType.SWING);
 
-        initBank();
+        try {
+            DataSource dataSource = new DataSource("data/test.dat");
+            dataSource.loadData();
+        } catch (IOException e) {
+            System.err.println("An error occurred while loading test.dat: " + e.getMessage());
+        }
 
         addToolMenu();
 
@@ -43,16 +49,6 @@ public class TUIDemo extends TApplication {
         setFocusFollowsMouse(true);
 
         showCustomerDetails();
-    }
-
-    private void initBank() {
-        Bank.addCustomer("John", "Doe");
-        Customer cust1 = Bank.getCustomer(0);
-        cust1.addAccount(new CheckingAccount(200.00, 100.00));
-
-        Bank.addCustomer("Jane", "Smith");
-        Customer cust2 = Bank.getCustomer(1);
-        cust2.addAccount(new SavingsAccount(500.00, 0.05));
     }
 
     @Override
