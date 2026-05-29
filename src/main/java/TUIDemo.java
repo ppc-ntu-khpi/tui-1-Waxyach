@@ -1,4 +1,9 @@
 import com.mybank.domain.Bank;
+import com.mybank.domain.Customer;
+import com.mybank.domain.Account;
+import com.mybank.domain.CheckingAccount;
+import com.mybank.domain.SavingsAccount;
+
 import jexer.TAction;
 import jexer.TApplication;
 import jexer.TField;
@@ -20,6 +25,8 @@ public class TUIDemo extends TApplication {
     public TUIDemo() throws Exception {
         super(BackendType.SWING);
 
+        initBank();
+
         addToolMenu();
 
         TMenu fileMenu = addMenu("&File");
@@ -36,6 +43,16 @@ public class TUIDemo extends TApplication {
         setFocusFollowsMouse(true);
 
         showCustomerDetails();
+    }
+
+    private void initBank() {
+        Bank.addCustomer("John", "Doe");
+        Customer cust1 = Bank.getCustomer(0);
+        cust1.addAccount(new CheckingAccount(200.00, 100.00));
+
+        Bank.addCustomer("Jane", "Smith");
+        Customer cust2 = Bank.getCustomer(1);
+        cust2.addAccount(new SavingsAccount(500.00, 0.05));
     }
 
     @Override
@@ -58,14 +75,44 @@ public class TUIDemo extends TApplication {
 
         TField customerNum = customerWindow.addField(24, 2, 3, false);
         TText details = customerWindow.addText("Owner Name: \nAccount Type: \nAccount Balance: ", 2, 4, 38, 8);
+
         customerWindow.addButton("&Show", 28, 2, new TAction() {
             @Override
             public void DO() {
                 try {
                     int num = Integer.parseInt(customerNum.getText());
-                    details.setText("Owner Name: John Doe (id=" + num + ")\nAccount Type: 'Checking'\nAccount Balance: $200.00");
+
+                    if (num < 0 || num >= Bank.getNumberOfCustomers()) {
+                        messageBox("Error", "Customer with ID " + num + " not found!").show();
+                        return;
+                    }
+
+                    Customer customer = Bank.getCustomer(num);
+                    String accountType = "None";
+                    double balance = 0.0;
+
+                    if (customer.getNumberOfAccounts() > 0) {
+                        Account account = customer.getAccount(0);
+                        balance = account.getBalance();
+
+                        if (account instanceof CheckingAccount) {
+                            accountType = "Checking";
+                        } else if (account instanceof SavingsAccount) {
+                            accountType = "Savings";
+                        }
+                    }
+
+                    String info = String.format(
+                            "Owner Name: %s %s (id=%d)\nAccount Type: '%s'\nAccount Balance: $%.2f",
+                            customer.getFirstName(), customer.getLastName(), num, accountType, balance
+                    );
+
+                    details.setText(info);
+
+                } catch (NumberFormatException e) {
+                    messageBox("Error", "You must provide a valid integer customer number!").show();
                 } catch (Exception e) {
-                    messageBox("Error", "You must provide a valid customer number!").show();
+                    messageBox("Error", "An unexpected error occurred: " + e.getMessage()).show();
                 }
             }
         });
